@@ -1,13 +1,12 @@
 const request = require('request');
 
-// ✅ 환경 변수 로드 (.env 파일)
 require('dotenv').config();
 
 const apiOptions = {
   server: 'http://localhost:3000'
 };
 if (process.env.NODE_ENV === 'production') {
-  apiOptions.server = 'https://yourapi.com';
+  apiOptions.server = 'https://loc8r-api-gayp.onrender.com';
 }
 
 /* ============================
