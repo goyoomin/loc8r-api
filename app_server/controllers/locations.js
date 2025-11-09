@@ -100,7 +100,7 @@ const renderDetailPage = (req, res, location) => {
       callToAction:
         "If you've been and you like it - or if you don't - please leave a review to help other people just like you."
     },
-    location: location,
+    location,
     apiKey: process.env.GOOGLE_API_KEY
   });
 };
@@ -182,11 +182,11 @@ const showError = (req, res, status) => {
 /* ============================
    7. 리뷰 작성 / 등록
 ============================ */
-const renderReviewForm = (req, res, { _id, name }) => {
+const renderReviewForm = (req, res, location) => {
   res.render('location-review-form', {
-    title: `Review ${name} on Loc8r`,
-    pageHeader: { title: `Review ${name}` },
-    location: { _id },
+    title: `Review ${location.name} on Loc8r`,
+    pageHeader: { title: `Review ${location.name}` },
+    location, // ✅ location 전체 전달
     error: req.query.err
   });
 };
