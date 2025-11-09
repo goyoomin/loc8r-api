@@ -1,5 +1,4 @@
 const request = require('request');
-
 require('dotenv').config();
 
 const apiOptions = {
@@ -89,9 +88,9 @@ const renderHomepage = (req, res, responseBody, message) => {
 };
 
 /* ============================
-   3. 상세 페이지 렌더링
+   3. 장소 상세 페이지 렌더링
 ============================ */
-const renderDetailPage = function (req, res, location) {
+const renderDetailPage = (req, res, location) => {
   res.render('location-info', {
     title: location.name,
     pageHeader: { title: location.name },
@@ -102,12 +101,12 @@ const renderDetailPage = function (req, res, location) {
         "If you've been and you like it - or if you don't - please leave a review to help other people just like you."
     },
     location: location,
-    apiKey: process.env.GOOGLE_API_KEY // ✅ 여기서 API 키를 전달
+    apiKey: process.env.GOOGLE_API_KEY
   });
 };
 
 /* ============================
-   4. 상세 API 호출
+   4. API로 장소 상세 정보 요청
 ============================ */
 const getLocationInfo = (req, res, callback) => {
   const path = `/api/locations/${req.params.locationid}`;
@@ -120,15 +119,13 @@ const getLocationInfo = (req, res, callback) => {
   request(requestOptions, (err, response, body) => {
     if (err) {
       console.error('❌ 상세 API 요청 오류:', err);
-      showError(req, res, 500);
-      return;
+      return showError(req, res, 500);
     }
 
     const statusCode = response && response.statusCode ? response.statusCode : 0;
     let data = body;
 
     if (statusCode === 200 && data) {
-      // ✅ GeoJSON 형태일 경우에도 정상적으로 인식되도록 보정
       if (data.coords && data.coords.type === 'Point') {
         data.coords = {
           lng: data.coords.coordinates[0],
@@ -164,7 +161,7 @@ const addReview = (req, res) => {
 };
 
 /* ============================
-   6. 에러 페이지
+   6. 에러 처리
 ============================ */
 const showError = (req, res, status) => {
   let title = '';
@@ -183,12 +180,13 @@ const showError = (req, res, status) => {
 };
 
 /* ============================
-   7. 리뷰 관련
+   7. 리뷰 작성 / 등록
 ============================ */
-const renderReviewForm = function (req, res, { name }) {
+const renderReviewForm = (req, res, { _id, name }) => {
   res.render('location-review-form', {
     title: `Review ${name} on Loc8r`,
     pageHeader: { title: `Review ${name}` },
+    location: { _id },
     error: req.query.err
   });
 };
@@ -202,25 +200,25 @@ const doAddReview = (req, res) => {
     reviewText: req.body.reviewText
   };
 
+  if (!postdata.author || !postdata.rating || !postdata.reviewText) {
+    return res.redirect(`/location/${locationid}/review/new?err=val`);
+  }
+
   const requestOptions = {
     url: `${apiOptions.server}${path}`,
     method: 'POST',
     json: postdata
   };
 
-  if (!postdata.author || !postdata.rating || !postdata.reviewText) {
-    res.redirect(`/location/${locationid}/review/new?err=val`);
-  } else {
-    request(requestOptions, (err, { statusCode }, body) => {
-      if (statusCode === 201) {
-        res.redirect(`/location/${locationid}`);
-      } else if (statusCode === 400 && body && body.name === 'ValidationError') {
-        res.redirect(`/location/${locationid}/review/new?err=val`);
-      } else {
-        showError(req, res, statusCode);
-      }
-    });
-  }
+  request(requestOptions, (err, { statusCode }, body) => {
+    if (statusCode === 201) {
+      res.redirect(`/location/${locationid}`);
+    } else if (statusCode === 400 && body && body.name === 'ValidationError') {
+      res.redirect(`/location/${locationid}/review/new?err=val`);
+    } else {
+      showError(req, res, statusCode);
+    }
+  });
 };
 
 /* ============================
