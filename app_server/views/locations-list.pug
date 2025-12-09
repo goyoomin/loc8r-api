@@ -10,7 +10,8 @@ block content
   .row
     .col-12.col-md-8
       .error= message
-      each location in locations
+
+      app-home-list
         .card
           .card-block
             h4
@@ -24,3 +25,9 @@ block content
 
     .col-12.col-md-4
       p.lead= sidebar
+
+      block scripts
+        script(src='/build/runtime.e4985b6c090739db.js')
+        script(src='/build/polyfills.7809da1470408aee.js')
+        script(src='/build/main.6affdf316b9ecc8b.js')
+

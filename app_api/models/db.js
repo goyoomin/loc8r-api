@@ -1,16 +1,19 @@
-// ✅ Mongoose 및 환경 설정 로드
 const mongoose = require('mongoose');
 const readline = require('readline');
-require('dotenv').config();   // .env 파일 로드
-require('./locations.js');    // 모델 불러오기
+require('dotenv').config();
 
-// ✅ Atlas 연결 URI (.env 파일에 MONGODB_URI=... 로 저장)
+// ===============================================
+// 🔥 1. DB URI 설정
+// ===============================================
 const dbURI = process.env.MONGODB_URI;
 
+// ===============================================
+// 🔥 2. DB 연결 함수
+// ===============================================
 const connect = async () => {
   try {
     await mongoose.connect(dbURI);
-    console.log(`✅ Mongoose connected successfully`);
+    console.log(`🟢 Mongoose connected successfully`);
     console.log(`🔗 Host: ${mongoose.connection.host}, DB: ${mongoose.connection.name}`);
   } catch (err) {
     console.error('❌ Mongoose connection error:', err.message);
@@ -18,7 +21,17 @@ const connect = async () => {
   }
 };
 
-// ✅ 연결 이벤트 로그
+
+// ===============================================
+// 🔥 3. 모델 등록 (DB 옵션 설정 후에 require해야 안정적)
+// ===============================================
+require('./locations.js');   // Location 모델 등록
+require('./users.js');       // User 모델 등록 (중요!)
+
+
+// ===============================================
+// 🔥 4. Mongoose 이벤트 처리
+// ===============================================
 mongoose.connection.on('connected', () => {
   console.log('🟢 Mongoose connection established.');
 });
@@ -31,7 +44,10 @@ mongoose.connection.on('disconnected', () => {
   console.log('🟡 Mongoose disconnected.');
 });
 
-// ✅ 윈도우용 SIGINT 처리
+
+// ===============================================
+// 🔥 5. 윈도우 SIGINT 처리
+// ===============================================
 if (process.platform === 'win32') {
   const rl = readline.createInterface({
     input: process.stdin,
@@ -43,7 +59,10 @@ if (process.platform === 'win32') {
   });
 }
 
-// ✅ 종료 시 처리 (Promise 기반)
+
+// ===============================================
+// 🔥 6. 종료 시 Graceful Shutdown
+// ===============================================
 const gracefulShutdown = async (msg) => {
   try {
     await mongoose.connection.close();
@@ -53,23 +72,24 @@ const gracefulShutdown = async (msg) => {
   }
 };
 
-// Nodemon 종료 시
 process.once('SIGUSR2', async () => {
   await gracefulShutdown('nodemon restart');
   process.kill(process.pid, 'SIGUSR2');
 });
 
-// 앱 강제 종료 시
 process.on('SIGINT', async () => {
   await gracefulShutdown('app termination');
   process.exit(0);
 });
 
-// Heroku 종료 시
 process.on('SIGTERM', async () => {
   await gracefulShutdown('Heroku app shutdown');
   process.exit(0);
 });
 
-// ✅ 연결 시도
+
+// ===============================================
+// 🔥 7. 연결 시작
+// ===============================================
 connect();
+
